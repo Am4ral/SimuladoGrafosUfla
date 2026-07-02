@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulado — Grafos, Heaps, Enumeração e PD</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface2: #273449;
+    --border: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --accent-dim: #0ea5e9;
+    --green: #34d399;
+    --green-bg: rgba(52, 211, 153, 0.12);
+    --red: #f87171;
+    --red-bg: rgba(248, 113, 113, 0.12);
+    --amber: #fbbf24;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 24px 16px 80px; }
+  header { text-align: center; margin-bottom: 28px; }
+  header h1 { font-size: 1.5rem; margin-bottom: 6px; }
+  header p { color: var(--muted); font-size: 0.95rem; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  /* ---- setup screen ---- */
+  .topics { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 22px; }
+  .topic-chip {
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 0.92rem;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .topic-chip.active { background: var(--accent); border-color: var(--accent); color: #082f49; font-weight: 600; }
+  .setup-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; color: var(--muted); font-size: 0.95rem; flex-wrap: wrap; }
+  .btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #082f49;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 26px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.15s;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* ---- quiz ---- */
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; flex-wrap: wrap; }
+  .badges { display: flex; gap: 8px; }
+  .badge {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em;
+    padding: 4px 10px; border-radius: 999px; text-transform: uppercase;
+  }
+  .badge.topic { background: rgba(56, 189, 248, 0.15); color: var(--accent); }
+  .badge.facil  { background: rgba(52, 211, 153, 0.15); color: var(--green); }
+  .badge.medio  { background: rgba(251, 191, 36, 0.15); color: var(--amber); }
+  .badge.dificil{ background: rgba(248, 113, 113, 0.15); color: var(--red); }
+  .counter { color: var(--muted); font-size: 0.9rem; }
+
+  .progress { height: 6px; background: var(--surface2); border-radius: 999px; overflow: hidden; margin-bottom: 20px; }
+  .progress > div { height: 100%; background: var(--accent); width: 0%; transition: width 0.25s; }
+
+  .question { font-size: 1.08rem; font-weight: 600; margin-bottom: 18px; white-space: pre-wrap; }
+  .question pre, .explain pre {
+    background: #0b1120; border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; margin: 10px 0; overflow-x: auto;
+    font-family: "SF Mono", Consolas, Menlo, monospace; font-size: 0.88rem; font-weight: 400;
+    line-height: 1.45; white-space: pre;
+  }
+  code { font-family: "SF Mono", Consolas, Menlo, monospace; background: #0b1120; padding: 1px 6px; border-radius: 5px; font-size: 0.9em; }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 13px 15px; cursor: pointer;
+    text-align: left; color: var(--text); font-size: 0.97rem; width: 100%;
+    transition: border-color 0.15s, background 0.15s;
+    font-family: inherit; line-height: 1.5;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--accent); }
+  .opt:disabled { cursor: default; }
+  .opt .letter {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 7px;
+    background: var(--border); display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.85rem;
+  }
+  .opt.correct { background: var(--green-bg); border-color: var(--green); }
+  .opt.correct .letter { background: var(--green); color: #052e21; }
+  .opt.wrong { background: var(--red-bg); border-color: var(--red); }
+  .opt.wrong .letter { background: var(--red); color: #450a0a; }
+  .opt.dim { opacity: 0.55; }
+
+  .explain {
+    margin-top: 18px; border-radius: 10px; padding: 16px 18px;
+    border: 1px solid var(--border); background: var(--surface2);
+    font-size: 0.95rem; white-space: pre-wrap;
+  }
+  .explain .verdict { font-weight: 800; margin-bottom: 6px; display: block; }
+  .explain.ok { border-color: var(--green); } .explain.ok .verdict { color: var(--green); }
+  .explain.err { border-color: var(--red); } .explain.err .verdict { color: var(--red); }
+
+  .nav { margin-top: 20px; display: flex; justify-content: flex-end; }
+
+  /* ---- results ---- */
+  .score-big { font-size: 2.6rem; font-weight: 800; text-align: center; margin: 10px 0 4px; }
+  .score-sub { text-align: center; color: var(--muted); margin-bottom: 20px; }
+  table.breakdown { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: 0.95rem; }
+  table.breakdown th, table.breakdown td { padding: 9px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  table.breakdown th { color: var(--muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .result-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .hidden { display: none; }
+  .review-tag { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🧠 Simulado de Grafos e Algoritmos</h1>
+    <p>Baseado nos PDFs do curso · Grafos, Heaps, Enumeração e Programação Dinâmica · Nível: mestrado</p>
+  </header>
+
+  <!-- SETUP -->
+  <div class="card" id="setup">
+    <h2 style="font-size:1.1rem; margin-bottom:4px;">Escolha os temas</h2>
+    <p style="color:var(--muted); font-size:0.9rem;">As questões e as alternativas são embaralhadas a cada tentativa. A explicação aparece imediatamente após você responder.</p>
+    <div class="topics" id="topicChips"></div>
+    <div class="setup-row">
+      <span id="countInfo"></span>
+    </div>
+    <button class="btn" id="startBtn">Começar simulado</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz" class="hidden">
+    <div class="topbar">
+      <div class="badges" id="qBadges"></div>
+      <div class="counter" id="qCounter"></div>
+    </div>
+    <div class="progress"><div id="progressBar"></div></div>
+    <div class="card">
+      <div class="review-tag hidden" id="reviewTag">🔁 Modo revisão — apenas as questões que você errou</div>
+      <div class="question" id="qText"></div>
+      <div class="options" id="qOptions"></div>
+      <div class="explain hidden" id="qExplain"></div>
+      <div class="nav">
+        <button class="btn hidden" id="nextBtn">Próxima →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results" class="card hidden">
+    <h2 style="text-align:center; font-size:1.2rem;">Resultado final</h2>
+    <div class="score-big" id="scoreBig"></div>
+    <div class="score-sub" id="scoreSub"></div>
+    <table class="breakdown" id="breakdown"></table>
+    <div class="result-actions">
+      <button class="btn" id="restartBtn">Novo simulado</button>
+      <button class="btn secondary hidden" id="reviewBtn">Revisar erros</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   BANCO DE QUESTÕES
+   topic: GRAFOS | HEAP | ENUM | PD
+   diff : facil | medio | dificil
+   ans  : índice da alternativa correta (antes do embaralhamento)
+   ============================================================ */
+const QUESTIONS = [
+
+/* =================== GRAFOS =================== */
+{topic:"GRAFOS", diff:"facil",
+ q:"Em um grafo não direcionado com 6 vértices, os graus são 2, 3, 4, 4, 2 e 3. Quantas arestas o grafo possui?",
+ opts:["18","9","6","12","Não é possível determinar apenas com os graus."],
+ ans:1,
+ exp:"Pelo Lema do Aperto de Mãos, Σ grau(v) = 2|E|, pois cada aresta contribui com 2 para a soma dos graus (uma vez em cada extremidade). A soma é 2+3+4+4+2+3 = 18, logo |E| = 18/2 = 9."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Qual é o número máximo de arestas de um grafo DIRECIONADO simples (sem laços e sem arestas paralelas) com n = 10 vértices?",
+ opts:["45","90","100","either 45 ou 90, dependendo dos pesos","10! / 2"],
+ ans:1,
+ exp:"Em um grafo direcionado simples, m ≤ n(n−1), pois cada par ordenado (u,v), com u ≠ v, pode ter uma aresta. Para n = 10: 10 × 9 = 90. No caso NÃO direcionado, o limite seria n(n−1)/2 = 45 — essa é a pegadinha clássica."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Sobre a matriz de adjacência versus a lista de adjacência, assinale a alternativa CORRETA.",
+ opts:[
+  "A matriz permite testar a existência de uma aresta (u,v) em O(1), mas consome memória O(n²) mesmo em grafos esparsos.",
+  "A lista de adjacência consome memória O(n²) e a matriz consome O(n + m).",
+  "A matriz de adjacência é sempre preferível, pois BFS e DFS ficam mais rápidas nela.",
+  "A lista de adjacência permite testar a existência de qualquer aresta em O(1).",
+  "Em grafos não direcionados, a matriz de adjacência é sempre assimétrica."],
+ ans:0,
+ exp:"A matriz responde 'existe aresta u→v?' com um acesso direto matriz[u][v] em O(1), mas reserva n² células mesmo que o grafo tenha pouquíssimas arestas. A lista de adjacência é econômica para grafos esparsos (guarda só o que existe) e é a base de BFS/DFS em O(n + m); porém, testar uma aresta pode exigir varrer a lista de vizinhos. Em grafos não direcionados a matriz é SIMÉTRICA."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Em um grafo simples NÃO direcionado, o que caracteriza cada coluna da matriz de incidência (linhas = vértices, colunas = arestas)?",
+ opts:[
+  "Cada coluna tem exatamente dois valores 1, pois cada aresta liga exatamente dois vértices.",
+  "Cada coluna tem exatamente um valor 1, indicando o vértice de origem.",
+  "Cada coluna tem n valores 1, um para cada vértice do grafo.",
+  "Cada coluna é simétrica em relação à diagonal principal.",
+  "Cada coluna armazena o grau do vértice correspondente."],
+ ans:0,
+ exp:"Na matriz de incidência, colocamos 1 na posição (v, e) quando o vértice v participa da aresta e. Como em um grafo simples não direcionado cada aresta liga exatamente dois vértices distintos, cada coluna tem exatamente dois 1s. Simetria em relação à diagonal é conceito de matriz de ADJACÊNCIA, não de incidência."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Considere o grafo não direcionado com lista de adjacência:\n<pre>1: 2, 3\n2: 1, 3, 4\n3: 1, 2, 4, 6\n4: 2, 3, 5, 6\n5: 4, 6\n6: 3, 4, 5</pre>Executando BFS a partir do vértice 1, visitando os vizinhos em ordem CRESCENTE, qual é a ordem de visita?",
+ opts:["1, 2, 3, 4, 6, 5","1, 2, 3, 4, 5, 6","1, 3, 2, 6, 4, 5","1, 2, 4, 3, 6, 5","1, 2, 3, 5, 4, 6"],
+ ans:0,
+ exp:"BFS explora por camadas com uma fila. Nível 0: {1}. Nível 1: vizinhos de 1 → 2, 3. Ao processar 2, descobre-se 4; ao processar 3, descobre-se 6. Nível 2: {4, 6}. Ao processar 4, descobre-se 5. Nível 3: {5}. Ordem: 1, 2, 3, 4, 6, 5. Note que 5 vem por último porque só é alcançado na camada 3 — a opção '1,2,3,4,5,6' ignora as camadas."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Por que a BFS garante encontrar o caminho com o MENOR número de arestas em grafos sem pesos?",
+ opts:[
+  "Porque explora os vértices por camadas: antes de visitar qualquer vértice à distância k, todos os vértices às distâncias 0..k−1 já foram visitados.",
+  "Porque a fila de prioridade sempre escolhe o vértice de menor custo acumulado.",
+  "Porque a BFS visita cada aresta exatamente duas vezes, garantindo otimalidade.",
+  "Porque a BFS testa todos os caminhos possíveis por força bruta antes de responder.",
+  "Porque a BFS ordena os vértices topologicamente antes de explorar."],
+ ans:0,
+ exp:"A BFS usa uma fila comum (FIFO), não fila de prioridade, e expande a busca em 'anéis' de distância crescente. Quando um vértice é descoberto pela primeira vez, não pode existir caminho com menos arestas até ele — se existisse, ele teria sido descoberto em uma camada anterior. Esse argumento vale apenas quando todas as arestas têm o mesmo custo."},
+
+{topic:"GRAFOS", diff:"dificil",
+ q:"Considere o grafo ponderado:\n<pre>A --1-- B --10-- D\nA --2-- C --2--- D</pre>É correto afirmar que:",
+ opts:[
+  "A BFS a partir de A trata os dois caminhos até D como equivalentes (2 arestas cada), mas o caminho de menor CUSTO é A→C→D, com custo 4 — por isso é necessário Dijkstra.",
+  "A BFS encontra corretamente o caminho de menor custo, pois ambos os caminhos têm 2 arestas.",
+  "Dijkstra não pode ser usado aqui, pois o grafo não é direcionado.",
+  "O caminho de menor custo é A→B→D, com custo 11.",
+  "BFS e Dijkstra sempre retornam o mesmo resultado em grafos conexos."],
+ ans:0,
+ exp:"BFS mede distância em NÚMERO DE ARESTAS: A→B→D e A→C→D têm ambas 2 arestas, então BFS pode retornar qualquer uma. Mas os custos são 1+10 = 11 e 2+2 = 4. Quando as arestas têm pesos diferentes, o menor caminho por custo exige Dijkstra (pesos não negativos) ou Bellman-Ford. Dijkstra funciona normalmente em grafos não direcionados."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Durante uma DFS em um grafo NÃO direcionado, qual evento demonstra a existência de um ciclo?",
+ opts:[
+  "Encontrar uma aresta para um vértice já visitado que NÃO é o pai do vértice atual na árvore DFS.",
+  "Encontrar qualquer aresta para um vértice já visitado, incluindo o pai.",
+  "Encontrar um vértice de grau 1.",
+  "Terminar a DFS sem visitar todos os vértices.",
+  "Encontrar uma discovery edge que leva a um vértice novo."],
+ ans:0,
+ exp:"Em grafo não direcionado, a aresta de volta ao PAI é apenas a mesma aresta usada para chegar ao vértice (a aresta é bidirecional) — não indica ciclo. Já uma aresta para um vértice visitado que não é o pai fecha um ciclo: já existia um caminho entre os dois pela árvore DFS, e a nova aresta o completa. Terminar sem visitar todos indica grafo desconexo, não ciclo."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Em uma DFS sobre um grafo DIRECIONADO, qual tipo de aresta prova a existência de um ciclo?",
+ opts:["Back edge (aresta para um ancestral ainda em exploração).","Tree edge.","Forward edge.","Cross edge.","Discovery edge para vértice branco."],
+ ans:0,
+ exp:"Em grafos direcionados: back edge ⇒ ciclo (e, reciprocamente, um DAG não possui back edges). Na notação de cores: encontrar uma aresta para um vértice CINZA (visitado mas não finalizado) fecha um ciclo. Forward edges (para descendente já visitado) e cross edges (para outra subárvore) apontam para vértices pretos e não criam ciclo por si só."},
+
+{topic:"GRAFOS", diff:"dificil",
+ q:"Qual é a sequência CORRETA de passos do algoritmo de Kosaraju para encontrar componentes fortemente conexas (SCCs)?",
+ opts:[
+  "DFS no grafo original guardando tempos de término → inverter todas as arestas → DFS no grafo reverso em ordem DECRESCENTE de término; cada árvore DFS é uma SCC.",
+  "BFS a partir de cada vértice → agrupar vértices com a mesma distância.",
+  "Ordenar as arestas por peso → unir componentes com Union-Find, como em Kruskal.",
+  "DFS no grafo original → remover as back edges → cada componente restante é uma SCC.",
+  "Ordenação topológica → relaxar arestas em ordem → agrupar vértices com mesma distância final."],
+ ans:0,
+ exp:"Kosaraju: (1) DFS no grafo original registrando os tempos de término; (2) inverter todas as arestas (grafo transposto); (3) DFS no grafo reverso processando os vértices em ordem decrescente de tempo de término — cada árvore DFS encontrada é exatamente uma SCC. Complexidade: O(n + m). As demais alternativas descrevem Kruskal, caminho mínimo em DAG e procedimentos que não computam SCCs."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Em um grafo direcionado, o que define uma componente FORTEMENTE conexa?",
+ opts:[
+  "Um conjunto MAXIMAL de vértices em que, para todo par (u, v), existe caminho dirigido de u até v E de v até u.",
+  "Um conjunto de vértices que fica conexo se ignorarmos as direções das arestas.",
+  "Um conjunto de vértices em que existe caminho de u até v para pelo menos um par (u, v).",
+  "Qualquer ciclo do grafo, mesmo que não seja maximal.",
+  "O conjunto de todos os vértices alcançáveis a partir da origem da DFS."],
+ ans:0,
+ exp:"SCC exige alcançabilidade MÚTUA (ida e volta) entre todos os pares, e o conjunto deve ser maximal (não pode ser ampliado mantendo a propriedade). Conexidade ignorando as direções define grafo FRACAMENTE conexo. Um ciclo gera conexidade forte entre seus vértices, mas a SCC é o conjunto maximal, que pode ser maior que um ciclo específico."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Considere o DAG com arestas A→B, A→C, B→D e C→D. Qual sequência é uma ordenação topológica VÁLIDA?",
+ opts:["A, C, B, D","B, A, C, D","A, D, B, C","D, C, B, A","C, D, A, B"],
+ ans:0,
+ exp:"Em uma ordenação topológica, para toda aresta u→v, u deve aparecer antes de v. Em 'A, C, B, D': A vem antes de B e C ✓; B e C vêm antes de D ✓. 'B, A, C, D' viola A→B (B antes de A); 'A, D, B, C' viola B→D e C→D. Um DAG pode ter várias ordenações válidas — aqui, 'A, B, C, D' também seria."},
+
+{topic:"GRAFOS", diff:"facil",
+ q:"Sobre a existência de ordenação topológica, é correto afirmar que:",
+ opts:[
+  "Ela existe se, e somente se, o grafo direcionado for acíclico (DAG).",
+  "Ela existe para qualquer grafo direcionado, com ou sem ciclos.",
+  "Ela existe apenas para grafos não direcionados conexos.",
+  "Ela existe apenas se o grafo for ponderado com pesos não negativos.",
+  "Ela é única sempre que existe."],
+ ans:0,
+ exp:"Se houver um ciclo, é impossível ordenar os vértices respeitando todas as precedências (algum vértice do ciclo teria que vir antes de si mesmo). Em um DAG, a ordenação sempre existe — por exemplo, ordenando por tempos de término decrescentes de uma DFS. Ela NÃO é necessariamente única: A→B, A→C admite 'A,B,C' e 'A,C,B'."},
+
+{topic:"GRAFOS", diff:"facil",
+ q:"A operação de RELAXAMENTO da aresta u → v com peso w(u,v) atualiza dist[v] quando:",
+ opts:[
+  "dist[u] + w(u,v) < dist[v]",
+  "dist[v] + w(u,v) < dist[u]",
+  "dist[u] < dist[v], independentemente do peso",
+  "w(u,v) é o menor peso do grafo",
+  "u já foi finalizado pelo algoritmo"],
+ ans:0,
+ exp:"Relaxar significa perguntar: 'chegar em v passando por u é melhor do que o melhor caminho conhecido até v?'. Se dist[u] + w(u,v) < dist[v], atualizamos dist[v] e registramos prev[v] = u. BFS, Dijkstra, Bellman-Ford e o caminho mínimo em DAGs usam a MESMA operação — o que muda entre eles é a ordem em que vértices/arestas são processados."},
+
+{topic:"GRAFOS", diff:"dificil",
+ q:"Por que o algoritmo de Dijkstra pode FALHAR na presença de arestas de peso negativo?",
+ opts:[
+  "Porque a garantia de que a distância do vértice extraído da fila já é definitiva se apoia em que estender um caminho nunca diminui seu custo — com pesos negativos, um vértice já finalizado poderia ter sua distância reduzida depois.",
+  "Porque a fila de prioridade não aceita chaves negativas.",
+  "Porque o grafo com pesos negativos necessariamente contém ciclo negativo.",
+  "Porque Dijkstra só funciona em grafos não direcionados.",
+  "Porque o relaxamento não está definido para pesos negativos."],
+ ans:0,
+ exp:"A correção de Dijkstra é greedy: ao extrair o vértice u de menor dist, assume-se que nenhum caminho futuro poderá melhorá-la, pois qualquer extensão só aumenta (ou mantém) o custo. Uma aresta negativa quebra exatamente essa premissa — um caminho 'mais caro agora' pode ficar mais barato depois. Não há problema técnico com chaves negativas na fila, e pesos negativos NÃO implicam ciclo negativo."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Qual é a complexidade típica de Dijkstra implementado com lista de adjacência e heap (fila de prioridade)?",
+ opts:["O((n + m) log n)","O(n + m)","O(n·m)","O(n²·m)","O(n log m)"],
+ ans:0,
+ exp:"Cada vértice é extraído do heap uma vez e cada aresta pode gerar uma atualização de prioridade; ambas as operações custam O(log n). Total: O((n + m) log n). O(n + m) é a complexidade de BFS/DFS; O(n·m) é a de Bellman-Ford."},
+
+{topic:"GRAFOS", diff:"dificil",
+ q:"No Bellman-Ford, por que são feitas exatamente n − 1 rodadas de relaxamento de todas as arestas, e como se detecta ciclo negativo?",
+ opts:[
+  "Um caminho simples tem no máximo n − 1 arestas, e cada rodada garante caminhos ótimos com uma aresta a mais; se após as n − 1 rodadas alguma aresta ainda puder ser relaxada, existe ciclo negativo alcançável.",
+  "n − 1 é a altura máxima do heap usado pelo algoritmo; ciclos negativos são detectados quando o heap fica vazio antes do fim.",
+  "As n − 1 rodadas ordenam as arestas por peso; ciclo negativo é detectado quando duas arestas têm o mesmo peso.",
+  "O número n − 1 vem da quantidade de arestas de uma árvore geradora; ciclo negativo é detectado comparando com a MST.",
+  "As rodadas param quando o grafo se torna um DAG; ciclos negativos tornam isso impossível."],
+ ans:0,
+ exp:"Após k rodadas, Bellman-Ford garante distâncias ótimas para todos os caminhos com até k arestas. Como um caminho simples usa no máximo n − 1 arestas, n − 1 rodadas cobrem todos os caminhos simples. Se, em uma rodada extra, ainda for possível melhorar alguma distância, é porque existe um ciclo de custo total negativo alcançável a partir da origem (dá para 'ganhar' custo infinitamente). Bellman-Ford não usa heap; complexidade O(n·m)."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Sobre caminhos mínimos em um DAG ponderado, assinale a alternativa CORRETA.",
+ opts:[
+  "Processando os vértices em ordem topológica e relaxando as arestas de saída, resolve-se o problema em O(n + m), mesmo com pesos NEGATIVOS.",
+  "É obrigatório usar Dijkstra, pois é o único algoritmo para grafos ponderados.",
+  "É necessário usar Bellman-Ford com n − 1 rodadas, custando O(n·m).",
+  "Pesos negativos impedem qualquer solução, mesmo em DAGs.",
+  "A ordem topológica só pode ser usada se todos os pesos forem iguais."],
+ ans:0,
+ exp:"A ordem topológica garante que, ao processar um vértice v, todos os caminhos que chegam a v já foram considerados (seus predecessores já foram processados). Basta uma passada relaxando as arestas: O(n + m). Como DAG não tem ciclos, não há risco de ciclo negativo — pesos negativos funcionam sem problema. É mais rápido que Dijkstra e que Bellman-Ford nesse caso especial."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Para cada cenário, qual é a escolha CORRETA de algoritmo de caminho mínimo?\n\nI. Grafo sem pesos.\nII. Pesos não negativos.\nIII. Pesos negativos, sem ciclo negativo alcançável.\nIV. DAG com pesos quaisquer.",
+ opts:[
+  "I: BFS · II: Dijkstra · III: Bellman-Ford · IV: relaxamento em ordem topológica",
+  "I: DFS · II: Bellman-Ford · III: Dijkstra · IV: BFS",
+  "I: Dijkstra · II: BFS · III: Kruskal · IV: Prim",
+  "I: BFS · II: Bellman-Ford · III: Dijkstra · IV: Kosaraju",
+  "I: Prim · II: Dijkstra · III: Bellman-Ford · IV: Kruskal"],
+ ans:0,
+ exp:"Tabela clássica: sem pesos → BFS, O(n+m); pesos não negativos → Dijkstra, O((n+m) log n); pesos negativos sem ciclo negativo → Bellman-Ford, O(n·m); DAG → ordenação topológica + relaxamento, O(n+m). Dijkstra não tolera pesos negativos; Kruskal/Prim resolvem MST, não caminho mínimo; Kosaraju resolve SCC."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"O FECHO TRANSITIVO de um grafo direcionado responde qual pergunta, e qual é o custo do método simples baseado em buscas?",
+ opts:[
+  "'Existe caminho de u até v?' para todos os pares — rodando DFS/BFS a partir de cada vértice, custo O(n(n + m)).",
+  "'Qual o caminho de menor custo entre u e v?' — custo O(n log n).",
+  "'Quantos ciclos existem no grafo?' — custo O(n + m).",
+  "'Qual é a árvore geradora mínima?' — custo O(m log m).",
+  "'O grafo é bipartido?' — custo O(n²) sempre."],
+ ans:0,
+ exp:"Fecho transitivo = alcançabilidade entre todos os pares de vértices (sem considerar custos). O método simples roda uma DFS ou BFS a partir de cada um dos n vértices; cada busca custa O(n + m), totalizando O(n(n + m)). Não confundir com caminho mínimo (que envolve custos) nem com MST."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Qual é a diferença fundamental entre o problema do CAMINHO MÍNIMO e o da ÁRVORE GERADORA MÍNIMA (MST)?",
+ opts:[
+  "Caminho mínimo minimiza o custo de UM percurso entre vértices a partir de uma origem; MST minimiza o custo TOTAL do conjunto de arestas que conecta TODOS os vértices.",
+  "São o mesmo problema com nomes diferentes.",
+  "MST só existe em grafos direcionados; caminho mínimo só em não direcionados.",
+  "Caminho mínimo exige pesos negativos; MST exige pesos positivos.",
+  "A MST sempre contém todos os caminhos mínimos a partir de qualquer origem."],
+ ans:0,
+ exp:"São objetivos diferentes: caminho mínimo otimiza rota origem→destino(s); MST otimiza a soma das arestas de uma árvore que conecta todos os vértices (n − 1 arestas, grafo não direcionado ponderado). O caminho entre dois vértices DENTRO da MST pode ser mais caro que o caminho mínimo real entre eles no grafo — por isso a última alternativa é falsa."},
+
+{topic:"GRAFOS", diff:"dificil",
+ q:"Prim e Dijkstra têm estrutura parecida (crescem a partir de um vértice usando fila de prioridade). Qual é a diferença essencial no CRITÉRIO DE ESCOLHA?",
+ opts:[
+  "Dijkstra escolhe o vértice de menor DISTÂNCIA ACUMULADA desde a origem; Prim escolhe a menor ARESTA que liga a árvore atual a um vértice de fora, ignorando o acumulado.",
+  "Prim escolhe pela distância acumulada; Dijkstra pela menor aresta local.",
+  "Dijkstra usa pilha e Prim usa fila comum.",
+  "Prim funciona com pesos negativos e Dijkstra também — não há diferença prática.",
+  "Dijkstra constrói a MST como efeito colateral do cálculo de distâncias."],
+ ans:0,
+ exp:"A chave de prioridade de Dijkstra é dist[u] + w(u,v) — o custo total desde a origem. A de Prim é apenas w(u,v) — o custo de conectar o novo vértice à árvore. Por isso resolvem problemas distintos: Dijkstra → caminhos mínimos; Prim → MST. A árvore de caminhos mínimos de Dijkstra geralmente NÃO é a MST."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"No algoritmo de Kruskal, qual estrutura de dados é usada para decidir se uma aresta pode entrar na MST, e qual é o critério?",
+ opts:[
+  "Union-Find: a aresta entra se conecta duas componentes DIFERENTES; se seus extremos já estão na mesma componente, ela formaria ciclo e é descartada.",
+  "Heap: a aresta entra se está na raiz do heap, sem verificação de ciclo.",
+  "Fila comum: a aresta entra na ordem de chegada.",
+  "Matriz de incidência: a aresta entra se sua coluna tem dois 1s.",
+  "Pilha: a aresta entra se foi a última inserida."],
+ ans:0,
+ exp:"Kruskal ordena as arestas por peso crescente e as processa uma a uma. O Union-Find (conjuntos disjuntos) responde eficientemente 'estes dois vértices já estão na mesma componente?'. Se sim, a aresta fecharia um ciclo e é rejeitada; se não, entra na MST e as componentes são unidas. O processo termina quando todos os vértices estão conectados (n − 1 arestas aceitas)."},
+
+{topic:"GRAFOS", diff:"dificil",
+ q:"Considere o grafo ponderado não direcionado:\n<pre>A-B: 1   B-C: 2   A-C: 3   C-D: 4   B-D: 5</pre>Executando Kruskal, qual é o custo total da MST e qual aresta é REJEITADA por formar ciclo?",
+ opts:[
+  "Custo 7; a aresta A-C (peso 3) é rejeitada.",
+  "Custo 8; a aresta C-D (peso 4) é rejeitada.",
+  "Custo 6; a aresta B-C (peso 2) é rejeitada.",
+  "Custo 7; a aresta B-D (peso 5) é rejeitada, e nenhuma outra é analisada.",
+  "Custo 10; nenhuma aresta é rejeitada."],
+ ans:0,
+ exp:"Ordem crescente: A-B(1) ✓, B-C(2) ✓, A-C(3) ✗ — A e C já estão na mesma componente via A-B-C, formaria ciclo. C-D(4) ✓ — completa os 4 vértices com 3 arestas. B-D(5) nem precisa entrar (já temos n−1 = 3 arestas). MST = {A-B, B-C, C-D}, custo 1+2+4 = 7."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"A ideia central do algoritmo de BORUVKA para MST é:",
+ opts:[
+  "Em cada fase, CADA componente escolhe simultaneamente a aresta mais barata que sai dela; as componentes são unidas e o processo repete até restar uma só.",
+  "Crescer uma única árvore a partir de um vértice inicial, escolhendo a menor aresta de saída (como Prim).",
+  "Ordenar todas as arestas e inserir as menores que não formam ciclo (como Kruskal).",
+  "Usar tempos de término de DFS para ordenar os vértices (como Kosaraju).",
+  "Relaxar todas as arestas n − 1 vezes (como Bellman-Ford)."],
+ ans:0,
+ exp:"Boruvka trabalha em fases: em cada fase, toda componente seleciona sua aresta mínima de saída, todas são adicionadas de uma vez e as componentes se fundem. O número de componentes cai pelo menos pela metade a cada fase. Difere de Prim (uma única árvore crescendo) e de Kruskal (arestas globalmente ordenadas, uma por vez)."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Sobre árvores e florestas em grafos não direcionados, qual afirmação é FALSA?",
+ opts:[
+  "Toda floresta com n vértices tem exatamente n − 1 arestas.",
+  "Uma árvore é um grafo conexo e acíclico, e com n vértices tem exatamente n − 1 arestas.",
+  "Todo grafo conexo com n vértices tem pelo menos n − 1 arestas.",
+  "Uma floresta é um grafo acíclico cujas componentes conexas são árvores.",
+  "Um grafo conexo com n vértices e exatamente n − 1 arestas é necessariamente uma árvore."],
+ ans:0,
+ exp:"Floresta tem NO MÁXIMO n − 1 arestas (exatamente n − k, onde k é o número de componentes/árvores). Só quando k = 1 (a floresta é uma única árvore) chega a n − 1. As demais são verdadeiras: conexo + n − 1 arestas ⇒ acíclico ⇒ árvore; conexidade exige pelo menos n − 1 arestas."},
+
+{topic:"GRAFOS", diff:"dificil",
+ q:"Um grafo G contém o triângulo {1,2,3} e admite uma coloração própria (vértices adjacentes com cores diferentes) usando 3 cores. O que se pode concluir sobre o número cromático χ(G)?",
+ opts:[
+  "χ(G) = 3: o triângulo força χ ≥ 3 (limite inferior) e a coloração exibida garante χ ≤ 3 (limite superior).",
+  "χ(G) ≤ 2, pois todo grafo com ciclo par é bicolorível.",
+  "χ(G) = 3 apenas se o grafo for completo.",
+  "Nada se pode concluir: o número cromático depende dos pesos das arestas.",
+  "χ(G) ≥ 4, pois o triângulo exige uma cor extra para segurança."],
+ ans:0,
+ exp:"Argumento clássico de sanduíche: uma clique de tamanho k força χ(G) ≥ k, pois seus vértices são mutuamente adjacentes (o triângulo dá χ ≥ 3); exibir uma coloração válida com 3 cores dá χ ≤ 3. Logo χ(G) = 3. Coloração não envolve pesos. Este é exatamente o raciocínio usado no grafo das notas do material."},
+
+{topic:"GRAFOS", diff:"dificil",
+ q:"Sobre CLIQUE MAXIMAL e CLIQUE MÁXIMA (max-clique), assinale a alternativa CORRETA.",
+ opts:[
+  "Toda clique máxima é maximal, mas nem toda clique maximal é máxima: maximal = não pode ser estendida com outro vértice; máxima = a de maior tamanho no grafo.",
+  "Os dois termos são sinônimos.",
+  "Uma clique maximal é sempre maior que a clique máxima.",
+  "Clique máxima é qualquer conjunto de vértices conectados por um caminho.",
+  "Um grafo possui sempre exatamente uma clique máxima."],
+ ans:0,
+ exp:"Maximal é propriedade LOCAL (não dá para adicionar mais nenhum vértice mantendo todos adjacentes entre si); máxima é propriedade GLOBAL (maior clique do grafo, tamanho ω(G)). A máxima obviamente não pode ser estendida, logo é maximal; mas pode haver cliques maximais pequenas que não são máximas. E pode haver VÁRIAS cliques máximas — no grafo das notas, {1,2,3}, {3,4,6} e {4,5,6} têm todas tamanho ω(G) = 3."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"O teorema Max-Flow Min-Cut afirma que, em uma rede de fluxo com origem s e destino t:",
+ opts:[
+  "O valor do fluxo máximo de s até t é IGUAL à capacidade do corte mínimo que separa s de t.",
+  "O fluxo máximo é sempre o dobro do corte mínimo.",
+  "O corte mínimo maximiza o número de arestas cruzando entre dois grupos.",
+  "O fluxo máximo independe das capacidades das arestas.",
+  "O corte mínimo só existe em grafos acíclicos."],
+ ans:0,
+ exp:"Fluxo máximo = corte mínimo: a maior quantidade que consegue fluir de s para t é exatamente limitada pelo 'gargalo' — o corte de menor capacidade total que separa a origem do destino. Cuidado para não confundir com MAX-CUT, que é outro problema: maximizar arestas cruzando entre dois grupos, sem origem/destino."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Qual é a diferença entre o problema do CORTE MÍNIMO (min-cut) e o problema MAX-CUT?",
+ opts:[
+  "Min-cut aparece em redes de fluxo com origem s e destino t e MINIMIZA a capacidade do corte; Max-Cut divide os vértices em dois grupos quaisquer buscando MAXIMIZAR o número de arestas que cruzam entre eles.",
+  "São o mesmo problema visto de ângulos diferentes.",
+  "Max-Cut exige origem e destino; min-cut não.",
+  "Min-cut maximiza arestas cruzando; Max-Cut minimiza.",
+  "Ambos só se aplicam a grafos direcionados acíclicos."],
+ ans:0,
+ exp:"Min-cut: contexto de fluxo, tem s e t, minimiza capacidade total do corte (e vale fluxo máximo = corte mínimo). Max-Cut: sem origem/destino — particiona V em dois grupos maximizando as arestas entre grupos. No grafo das notas, a partição A = {1,4,6}, B = {2,3,5} atinge 7 das 9 arestas cruzando."},
+
+{topic:"GRAFOS", diff:"medio",
+ q:"Um grafo direcionado é FRACAMENTE conexo quando:",
+ opts:[
+  "Ignorando as direções das arestas, o grafo resultante (não direcionado) é conexo — mesmo que nem todo par se alcance respeitando as direções.",
+  "Para todo par (u, v) existe caminho dirigido de u a v e de v a u.",
+  "Existe pelo menos um vértice que alcança todos os outros.",
+  "O grafo possui pelo menos uma componente fortemente conexa.",
+  "O grafo é acíclico e conexo."],
+ ans:0,
+ exp:"Fracamente conexo = conexo 'apagando as setas'. Fortemente conexo é o conceito mais exigente: caminho dirigido de ida E de volta entre todos os pares. Todo grafo fortemente conexo é fracamente conexo, mas a recíproca é falsa."},
+
+/* =================== HEAP =================== */
+{topic:"HEAP", diff:"medio",
+ q:"No nível de TIPO ABSTRATO DE DADO (ADT), o que define uma fila de prioridade?",
+ opts:[
+  "O comportamento esperado — retornar sempre o elemento de maior prioridade — sem fixar a estrutura interna, que pode ser array, lista encadeada ou heap.",
+  "A obrigatoriedade de usar um heap binário como estrutura interna.",
+  "A regra FIFO: o primeiro elemento a entrar é o primeiro a sair.",
+  "A exigência de que números maiores sempre representem maior prioridade.",
+  "A garantia de que todas as operações custam O(1)."],
+ ans:0,
+ exp:"ADT define O QUE a estrutura faz (contrato), não COMO. O contrato da fila de prioridade é retornar/remover o elemento mais prioritário — a implementação (array ordenado, lista, heap...) é decisão de outro nível. A regra de prioridade também é flexível (maior valor, menor prazo, função de prioridade etc.). Atenção em prova: verificar se 'top' significa apenas consultar ou remover."},
+
+{topic:"HEAP", diff:"medio",
+ q:"Comparando implementações de fila de prioridade, qual linha da tabela está CORRETA (Insert / Peek / Remove)?",
+ opts:[
+  "Lista encadeada ordenada (maior no head): O(N) / O(1) / O(1)",
+  "Array não ordenado: O(N) / O(1) / O(1)",
+  "Lista encadeada ordenada: O(1) / O(N) / O(N)",
+  "Heap binário: O(1) / O(1) / O(1)",
+  "Array ordenado com maior no fim: O(1) / O(N) / O(N)"],
+ ans:0,
+ exp:"Estruturas ORDENADAS: inserir é caro (O(N), achar a posição certa), mas consultar/remover o prioritário é O(1). Estruturas NÃO ordenadas: inserir O(1), mas achar o prioritário custa O(N). Heap: equilíbrio — Insert O(log N), Peek O(1), Remove O(log N). As alternativas erradas invertem esses papéis."},
+
+{topic:"HEAP", diff:"facil",
+ q:"Qual é a definição mais precisa de um heap binário (max-heap)?",
+ opts:[
+  "Árvore binária QUASE COMPLETA (níveis cheios exceto talvez o último, preenchido da esquerda para a direita) em que todo pai tem prioridade ≥ à dos filhos.",
+  "Árvore binária de busca balanceada em que menores ficam à esquerda e maiores à direita.",
+  "Qualquer árvore binária em que a raiz contém o maior elemento.",
+  "Árvore completa em que os elementos estão em ordem crescente por nível.",
+  "Lista duplamente encadeada ordenada por prioridade."],
+ ans:0,
+ exp:"Heap binário = propriedade ESTRUTURAL (árvore binária quase completa, sem 'buracos' antes de posições mais à direita) + propriedade de PRIORIDADE (pai ≥ filhos no max-heap). As duas são necessárias: uma árvore que respeita prioridade mas tem buracos não é heap; uma árvore quase completa com filho maior que o pai também não é."},
+
+{topic:"HEAP", diff:"medio",
+ q:"Por que um heap binário NÃO é uma árvore binária de busca (BST)?",
+ opts:[
+  "Porque no heap a única regra é entre pai e filhos — não há exigência de que o filho esquerdo seja menor que o direito, nem de ordenação entre subárvores.",
+  "Porque o heap não pode ser percorrido em ordem.",
+  "Porque a BST não pode ser armazenada em array.",
+  "Porque no heap os elementos ficam totalmente ordenados, e na BST não.",
+  "Porque a BST não tem raiz definida."],
+ ans:0,
+ exp:"Na BST vale esquerda < raiz < direita (ordem total recuperável por percurso em-ordem). No heap vale apenas pai ≥ filhos (max-heap): 7 pode estar à esquerda de 8 no mesmo nível sem problema. O heap mantém uma ordenação PARCIAL — suficiente para saber onde está o máximo, mas não a ordem completa."},
+
+{topic:"HEAP", diff:"medio",
+ q:"Qual dos arrays abaixo NÃO representa um max-heap válido (índices começando em 0)?",
+ opts:["[6, 3, 9]","[9, 7, 8, 6, 5, 1, 2, 3, 4]","[10, 10, 9, 8, 2]","[7, 7, 7, 7]","[9, 8, 9]"],
+ ans:0,
+ exp:"Em [6, 3, 9], o filho direito da raiz (índice 2, valor 9) é MAIOR que o pai (6) — viola pai ≥ filhos. Nos demais: [9,7,8,6,5,1,2,3,4] satisfaz todas as relações (9≥7,8; 7≥6,5; 8≥1,2; 6≥3,4); empates como 10≥10, 7≥7 e 9≥9 são permitidos, pois a propriedade é 'maior OU IGUAL'."},
+
+{topic:"HEAP", diff:"medio",
+ q:"Considere o heap armazenado no array (índices a partir de 0):\n<pre>Índice: 0   1   2   3   4   5   6   7\nValor:  15  12  14  9   10  3   8   7</pre>Quais são os FILHOS do nó no índice 2 (valor 14)?",
+ opts:[
+  "Índices 5 e 6 — valores 3 e 8.",
+  "Índices 4 e 5 — valores 10 e 3.",
+  "Índices 3 e 4 — valores 9 e 10.",
+  "Índices 6 e 7 — valores 8 e 7.",
+  "O nó no índice 2 é folha e não tem filhos."],
+ ans:0,
+ exp:"Com índices começando em 0: filho_esquerdo(i) = 2i + 1 e filho_direito(i) = 2i + 2. Para i = 2: filhos em 2·2+1 = 5 e 2·2+2 = 6, valores 3 e 8. (E o pai de i seria (i−1)//2.) Usar as fórmulas do índice 1 aqui — 2i e 2i+1 — levaria à resposta errada 'índices 4 e 5'."},
+
+{topic:"HEAP", diff:"medio",
+ q:"Agora com índices começando em 1: em um heap armazenado em array, qual é o índice do PAI do nó que está no índice 4?",
+ opts:["2","1","3","8","4"],
+ ans:0,
+ exp:"Com base 1: pai(i) = i // 2, filho_esquerdo(i) = 2i, filho_direito(i) = 2i + 1. Logo pai(4) = 4 // 2 = 2. Detalhe de prova: as fórmulas MUDAM conforme a base do índice — com base 0 seria pai(i) = (i−1)//2, que daria (4−1)//2 = 1."},
+
+{topic:"HEAP", diff:"dificil",
+ q:"Inserindo o valor 10 no max-heap <code>[9, 7, 8, 6, 5, 1, 2, 3, 4]</code> (índice 0), qual é o array resultante após o sift-up?",
+ opts:[
+  "[10, 9, 8, 6, 7, 1, 2, 3, 4, 5]",
+  "[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]",
+  "[9, 7, 8, 6, 5, 1, 2, 3, 4, 10]",
+  "[10, 8, 9, 6, 5, 1, 2, 3, 4, 7]",
+  "[9, 10, 8, 6, 7, 1, 2, 3, 4, 5]"],
+ ans:0,
+ exp:"O 10 entra na próxima posição livre (índice 9) e sobe trocando com o pai enquanto for maior: pai(9) = 4 (valor 5) → troca; pai(4) = 1 (valor 7) → troca; pai(1) = 0 (valor 9) → troca. Sequência: [...,4,10] → troca com 5 → troca com 7 → troca com 9, resultando em [10, 9, 8, 6, 7, 1, 2, 3, 4, 5]. Note que o heap NÃO fica totalmente ordenado — apenas restaura pai ≥ filhos. Custo: O(log N)."},
+
+{topic:"HEAP", diff:"medio",
+ q:"Qual é o procedimento correto para REMOVER o elemento de maior prioridade de um max-heap, e seu custo?",
+ opts:[
+  "Remover a raiz, colocar o ÚLTIMO elemento do heap na raiz e fazê-lo descer (sift-down) trocando com o MAIOR filho até restaurar a propriedade — O(log N).",
+  "Remover a raiz e promover sempre o filho esquerdo recursivamente — O(1).",
+  "Procurar o maior elemento em todo o array e removê-lo — O(N).",
+  "Remover o último elemento do array, que é sempre o maior — O(1).",
+  "Reordenar o array inteiro após cada remoção — O(N log N)."],
+ ans:0,
+ exp:"O maior está na raiz. Para manter a árvore quase completa, quem ocupa o lugar é o último elemento; depois ele desce trocando com o maior dos filhos até que pai ≥ filhos volte a valer. O caminho de descida é limitado pela altura ≈ log₂(N), logo O(log N). Promover sempre o filho esquerdo poderia violar a propriedade em relação ao direito."},
+
+{topic:"HEAP", diff:"dificil",
+ q:"Sobre a construção de um heap com N elementos, assinale a alternativa CORRETA.",
+ opts:[
+  "Inserir os N elementos um a um custa O(N log N); construir com heapify (sift-down dos últimos nós internos até a raiz) custa O(N).",
+  "As duas formas custam O(N log N), sem diferença assintótica.",
+  "Heapify custa O(N²), sendo pior que inserções sucessivas.",
+  "Inserir um a um custa O(N) e heapify custa O(log N).",
+  "Heapify só funciona se o array já estiver parcialmente ordenado."],
+ ans:0,
+ exp:"Cada inserção individual pode subir O(log N) níveis → total O(N log N). O heapify eficiente aplica sift-down de baixo para cima: a maioria dos nós está perto das folhas e desce pouco — a soma converge para O(N). Essa diferença (O(N) vs O(N log N)) é pergunta clássica de prova teórica."},
+
+{topic:"HEAP", diff:"medio",
+ q:"O HEAP SORT ordena N elementos com qual estratégia e complexidade?",
+ opts:[
+  "Constrói um heap e remove repetidamente o elemento de maior prioridade; como cada remoção custa O(log N), o total é O(N log N).",
+  "Compara pares adjacentes trocando-os, em O(N²).",
+  "Divide o array ao meio recursivamente e intercala, em O(N log N), sem usar heap.",
+  "Usa uma tabela hash para ordenar em O(N).",
+  "Percorre o heap em-ordem (in-order), obtendo a sequência ordenada em O(N)."],
+ ans:0,
+ exp:"Heap sort: (1) construir o heap (O(N) com heapify); (2) extrair o máximo N vezes, cada extração O(log N) → O(N log N) total. Com max-heap, as remoções saem em ordem decrescente. A alternativa da intercalação descreve o Merge Sort. Percurso em-ordem só produz sequência ordenada em BST, não em heap."},
+
+{topic:"HEAP", diff:"medio",
+ q:"Como fazer uma fila de prioridade se comportar exatamente como uma PILHA (LIFO)?",
+ opts:[
+  "Atribuir maior prioridade ao elemento MAIS RECENTE (por exemplo, prioridade = instante de chegada, extraindo sempre o maior).",
+  "Atribuir maior prioridade ao elemento mais ANTIGO.",
+  "Usar um min-heap com o valor do elemento como prioridade.",
+  "Não é possível: pilhas e filas de prioridade são incompatíveis.",
+  "Inserir os elementos em ordem decrescente de valor."],
+ ans:0,
+ exp:"A fila de prioridade é flexível: a função de prioridade define o comportamento. Prioridade crescente com o tempo de chegada ⇒ o último a entrar é o primeiro a sair (LIFO, pilha). Se o mais ANTIGO tiver prioridade maior, reproduz-se uma fila comum (FIFO). É a mesma ideia do truque de usar prioridade = −x para simular min-heap com max-heap."},
+
+{topic:"HEAP", diff:"facil",
+ q:"Em um MIN-HEAP, qual propriedade vale e onde fica o elemento de MENOR valor?",
+ opts:[
+  "Cada pai é ≤ seus filhos, e o menor elemento fica na raiz.",
+  "Cada pai é ≥ seus filhos, e o menor elemento fica na raiz.",
+  "Cada pai é ≤ seus filhos, e o menor elemento fica na folha mais à direita.",
+  "Os elementos ficam em ordem crescente da esquerda para a direita em cada nível.",
+  "O menor elemento fica sempre no último índice do array."],
+ ans:0,
+ exp:"Min-heap: pai ≤ filhos ⇒ a raiz contém o mínimo (útil em Dijkstra e Prim, que extraem o menor a cada passo). Max-heap é o espelho: pai ≥ filhos, máximo na raiz. Não há ordenação da esquerda para a direita dentro dos níveis — só a relação vertical pai↔filho."},
+
+{topic:"HEAP", diff:"medio",
+ q:"Uma árvore satisfaz 9 ≥ 7 ≥ 6 ao longo do único caminho existente, mas tem esta forma:\n<pre>        9\n      /\n    7\n      \\\n        6</pre>Ela é um heap binário válido?",
+ opts:[
+  "Não: apesar de respeitar a prioridade, ela viola a propriedade ESTRUTURAL — não é quase completa (há 'buracos' antes de posições mais à direita).",
+  "Sim: basta respeitar pai ≥ filhos para ser heap.",
+  "Sim, desde que seja tratada como min-heap.",
+  "Não, porque heaps não podem ter três níveis.",
+  "Não, porque 9 deveria estar em uma folha."],
+ ans:0,
+ exp:"Heap exige DUAS propriedades. Aqui a prioridade está OK, mas a estrutura não: o nível 1 tem só o filho esquerdo (falta preencher a direita da raiz antes de descer), e o 6 está como filho direito de 7 sem existir filho esquerdo. Preenchimento deve ser nível a nível, da esquerda para a direita, sem lacunas — senão a representação compacta em array (pai/filhos por índice) quebra."},
+
+/* =================== ENUMERAÇÃO =================== */
+{topic:"ENUM", diff:"facil",
+ q:"Qual alternativa relaciona CORRETAMENTE o tipo de espaço de busca ao seu tamanho?",
+ opts:[
+  "Subconjuntos de n elementos: 2ⁿ · Permutações de n elementos: n! · Senhas de k posições com d opções: dᵏ",
+  "Subconjuntos: n! · Permutações: 2ⁿ · Senhas: k·d",
+  "Subconjuntos: n² · Permutações: 2ⁿ · Senhas: dᵏ",
+  "Subconjuntos: 2ⁿ · Permutações: n² · Senhas: kᵈ",
+  "Subconjuntos: C(n,2) · Permutações: n! · Senhas: d + k"],
+ ans:0,
+ exp:"Cada elemento entra ou não no subconjunto → 2ⁿ. Ordenar n elementos distintos → n!. Cada uma das k posições tem d escolhas independentes → dᵏ (ex.: senha de 4 dígitos decimais = 10⁴ = 10.000). Esses três tamanhos explicam por que enumeração pura costuma ter custo exponencial ou fatorial."},
+
+{topic:"ENUM", diff:"medio",
+ q:"No problema do ciclo Hamiltoniano / caixeiro viajante com 9 cidades, FIXANDO a cidade inicial, quantas permutações das demais cidades a força bruta precisa considerar — e por que fixar a inicial é válido?",
+ opts:[
+  "8! — porque, se existe um ciclo, ele passa por todas as cidades, então qualquer cidade do ciclo pode ser tomada como ponto de partida sem perda de generalidade.",
+  "9! — fixar a cidade inicial não reduz o espaço de busca.",
+  "2⁹ — cada cidade entra ou não na rota.",
+  "8² — pares ordenados de cidades restantes.",
+  "C(9,2) — combinações de cidades duas a duas."],
+ ans:0,
+ exp:"Um ciclo é invariante por rotação: A→B→C→A é o mesmo ciclo que B→C→A→B. Fixando a cidade inicial, restam as (n−1)! ordenações das demais: 8! = 40.320 para 9 cidades. Sem fixar, contaríamos cada ciclo n vezes. O crescimento fatorial é o que torna a força bruta inviável para muitas cidades."},
+
+{topic:"ENUM", diff:"medio",
+ q:"Sobre DFS e BFS no contexto de ENUMERAÇÃO, é correto afirmar que:",
+ opts:[
+  "Elas apenas definem a ORDEM de visita dos estados; a redução do espaço de busca vem de técnicas como backtracking, branch and bound e restrições do problema.",
+  "Ambas são técnicas de poda que reduzem o espaço de busca automaticamente.",
+  "A DFS garante encontrar primeiro a solução mais rasa da árvore de enumeração.",
+  "A BFS usa menos memória que a DFS em árvores de enumeração largas.",
+  "A BFS é obrigatória em backtracking, pois facilita desfazer escolhas."],
+ ans:0,
+ exp:"Ponto reforçado no material: DFS/BFS NÃO são poda — só ditam a ordem de exploração. DFS vai fundo (boa para backtracking, pouca memória, mas pode insistir em ramos ruins); BFS explora por níveis (acha soluções rasas primeiro, mas consome muita memória). Quem corta ramos é o backtracking (violação de restrição) ou o branch and bound (limites)."},
+
+{topic:"ENUM", diff:"dificil",
+ q:"Qual é a diferença essencial entre a poda do BACKTRACKING e a poda do BRANCH AND BOUND?",
+ opts:[
+  "Backtracking poda por INVIABILIDADE (a solução parcial viola uma restrição); branch and bound poda por FALTA DE VANTAGEM (o ramo, mesmo viável, não pode superar a melhor solução já conhecida).",
+  "Backtracking poda por custo; branch and bound poda por violação de restrições.",
+  "Backtracking nunca poda; branch and bound sempre poda todos os ramos.",
+  "Branch and bound só funciona em problemas de decisão; backtracking só em otimização.",
+  "Não há diferença: são nomes distintos para a mesma técnica."],
+ ans:0,
+ exp:"Backtracking: 'esse caminho viola uma restrição' — ex.: duas rainhas na mesma diagonal ⇒ abandona o ramo. Branch and bound: 'esse caminho ainda pode ser válido, mas seu limite (bound) mostra que não melhora a melhor solução' — ex.: rota parcial do TSP já custa mais que a melhor rota completa. B&B é típico de OTIMIZAÇÃO; backtracking, de problemas com restrições. Ambos permanecem exponenciais no pior caso."},
+
+{topic:"ENUM", diff:"medio",
+ q:"Em um branch and bound de MINIMIZAÇÃO, a melhor solução completa conhecida custa 50. Três ramos têm limites INFERIORES (custo mínimo possível) de 40, 70 e 45. O que o algoritmo faz?",
+ opts:[
+  "Continua explorando os ramos com limites 40 e 45 e PODA o ramo com limite 70.",
+  "Poda os três ramos, pois nenhum é garantidamente melhor que 50.",
+  "Explora os três ramos, pois limites não permitem descartar nada.",
+  "Poda os ramos 40 e 45 e explora o 70, que tem mais chances de surpreender.",
+  "Encerra a busca e retorna 50 como solução ótima comprovada."],
+ ans:0,
+ exp:"O bound é uma estimativa OTIMISTA do que o ramo pode alcançar. Se nem no melhor caso o ramo bate a solução atual (70 > 50), explorá-lo é desperdício ⇒ poda. Ramos com limites 40 e 45 ainda PODEM produzir algo melhor que 50, então continuam. A poda com limites corretos nunca altera a resposta ótima — apenas evita trabalho."},
+
+{topic:"ENUM", diff:"medio",
+ q:"O que significa, na prática, dizer que um problema é NP-DIFÍCIL?",
+ opts:[
+  "Que ele é pelo menos tão difícil quanto os problemas mais difíceis de NP, e não se conhece algoritmo de tempo polinomial que resolva todos os seus casos.",
+  "Que ele é impossível de resolver por qualquer algoritmo.",
+  "Que ele só pode ser resolvido por força bruta, sem nenhuma alternativa.",
+  "Que ele sempre pode ser resolvido em tempo polinomial com programação dinâmica.",
+  "Que suas instâncias pequenas também são intratáveis."],
+ ans:0,
+ exp:"NP-difícil não significa insolúvel: métodos exatos (força bruta, backtracking, branch and bound, PD) resolvem, mas em geral com custo exponencial no pior caso; heurísticas e algoritmos aproximativos dão respostas boas/garantidas em tempo menor. Instâncias pequenas são perfeitamente tratáveis — o problema é a escalabilidade. TSP é o exemplo clássico."},
+
+{topic:"ENUM", diff:"medio",
+ q:"No problema das N-Rainhas resolvido por backtracking, quais verificações caracterizam a poda, e qual representação de solução parcial é comum?",
+ opts:[
+  "Poda ao detectar rainhas na mesma coluna ou diagonal; solução parcial representada por um vetor em que a posição i guarda a coluna da rainha da linha i.",
+  "Poda ao detectar tabuleiro desordenado; solução representada por matriz de adjacência.",
+  "Poda quando o número da linha é par; solução representada por lista de arestas.",
+  "Não há poda: todas as N^N configurações são testadas; solução representada por string.",
+  "Poda apenas no final, comparando soluções completas; solução representada por heap."],
+ ans:0,
+ exp:"Colocando uma rainha por LINHA (o vetor linha→coluna já elimina conflitos de linha), resta verificar coluna e diagonais contra as rainhas anteriores. Ao detectar ataque, o ramo inteiro é abandonado imediatamente (poda por inviabilidade) — bem antes de completar o tabuleiro. É o exemplo canônico de backtracking."},
+
+{topic:"ENUM", diff:"medio",
+ q:"Qual é a diferença entre uma HEURÍSTICA e um ALGORITMO APROXIMATIVO?",
+ opts:[
+  "A heurística busca uma boa solução rapidamente SEM garantia formal de qualidade; o algoritmo aproximativo fornece solução próxima da ótima COM alguma garantia de qualidade em relação à solução ideal.",
+  "São sinônimos exatos na literatura.",
+  "A heurística sempre encontra a solução ótima; o aproximativo nunca.",
+  "O algoritmo aproximativo é sempre mais rápido que qualquer heurística.",
+  "Heurísticas só existem para problemas polinomiais."],
+ ans:0,
+ exp:"Ex.: no TSP, 'ir sempre à cidade mais próxima ainda não visitada' é heurística — rápida, mas pode gerar rota bem ruim, sem garantia. Um algoritmo aproximativo (ex.: 2-aproximação) garante formalmente que a resposta está a um fator limitado da ótima. Ambos são úteis quando o método exato é caro demais (problemas NP-difíceis)."},
+
+{topic:"ENUM", diff:"medio",
+ q:"Quantas combinações simples C(n, r) existem para escolher r = 5 elementos entre n = 8, e em qual situação essa contagem aparece?",
+ opts:[
+  "C(8,5) = 56 — por exemplo, ao testar por força bruta todos os candidatos a CLIQUE de tamanho 5 em um grafo com 8 vértices.",
+  "C(8,5) = 40 — ao contar permutações de rotas no TSP.",
+  "C(8,5) = 336 — ao contar subconjuntos de qualquer tamanho.",
+  "C(8,5) = 120 — ao contar ordenações topológicas.",
+  "C(8,5) = 13 — ao contar arestas de uma árvore."],
+ ans:0,
+ exp:"C(8,5) = 8!/(5!·3!) = 56. Combinações (sem ordem) aparecem quando escolhemos SUBCONJUNTOS — como testar todos os grupos de r vértices para verificar se formam clique: para cada grupo, checa-se se todos os pares estão conectados na matriz de adjacência. O crescimento rápido de C(n,r) é o gargalo da força bruta para clique."},
+
+/* =================== PROGRAMAÇÃO DINÂMICA =================== */
+{topic:"PD", diff:"facil",
+ q:"Quais são as DUAS características que justificam resolver um problema com programação dinâmica?",
+ opts:[
+  "Subproblemas SOBREPOSTOS (os mesmos subproblemas reaparecem) e SUBESTRUTURA ÓTIMA (a solução ótima se constrói a partir de soluções ótimas dos subproblemas).",
+  "Grafo de entrada completo e pesos não negativos.",
+  "Recursão infinita e pilha de chamadas vazia.",
+  "Entrada ordenada e busca binária aplicável.",
+  "Subproblemas totalmente independentes e divisão sempre pela metade."],
+ ans:0,
+ exp:"Sobreposição é o que a PD explora ao ARMAZENAR resultados: cada subproblema é resolvido uma única vez. Subestrutura ótima garante que combinar respostas ótimas menores produz a resposta ótima maior. 'Subproblemas independentes divididos pela metade' descreve divisão e conquista (ex.: Merge Sort), não PD."},
+
+{topic:"PD", diff:"medio",
+ q:"Sobre as duas formas de implementar PD, assinale a alternativa CORRETA.",
+ opts:[
+  "Top-down usa recursão + cache (memoização) e calcula apenas os subproblemas que realmente aparecem; bottom-up preenche uma tabela dos casos base até o problema final.",
+  "Top-down preenche a tabela dos menores para os maiores; bottom-up usa recursão pura sem armazenamento.",
+  "Memoização significa ordenar os dados antes de resolver.",
+  "Bottom-up é sempre assintoticamente mais rápido que top-down.",
+  "Top-down dispensa casos base, pois a recursão os descobre sozinha."],
+ ans:0,
+ exp:"Top-down (memoização): a recursão consulta o cache antes de calcular — vantagem: só computa subproblemas alcançados; desvantagem: overhead de chamadas. Bottom-up: itera dos casos base ao alvo preenchendo a tabela — a ordem de cálculo deve garantir que as dependências já estejam prontas. Assintoticamente costumam empatar; ambos precisam de casos base."},
+
+{topic:"PD", diff:"medio",
+ q:"Por que FIBONACCI é um exemplo clássico de PD, enquanto FATORIAL não é?",
+ opts:[
+  "Fibonacci tem subproblemas repetidos (fib(n−1) e fib(n−2) compartilham descendentes, ex.: fib(3) aparece várias vezes); no fatorial cada subproblema aparece uma única vez, então não há o que reaproveitar.",
+  "Fatorial não pode ser escrito recursivamente.",
+  "Fibonacci não tem casos base, o que exige tabela.",
+  "Fatorial cresce mais rápido que Fibonacci, inviabilizando a tabela.",
+  "Fibonacci só pode ser calculado com matriz de adjacência."],
+ ans:0,
+ exp:"Sem cache, fib recursivo recalcula os mesmos valores exponencialmente; com PD cai para O(n). Já fat(n) = n · fat(n−1) forma uma cadeia LINEAR: fat(5)→fat(4)→fat(3)... — cada subproblema é usado uma vez, então memoizar não economiza nada. Recursão é forma de implementação; PD é a técnica de reaproveitamento — não confundir."},
+
+{topic:"PD", diff:"medio",
+ q:"No problema do TROCO com moedas {1, 3, 4}, usando T(v) = 1 + min(T(v − moeda)) e T(0) = 0, qual é o número MÍNIMO de moedas para formar o valor 6?",
+ opts:["2","1","3","4","6"],
+ ans:0,
+ exp:"Preenchendo a tabela: T(1)=1, T(2)=2, T(3)=1, T(4)=1, T(5)=1+min(T(4),T(2),T(1))=2, T(6)=1+min(T(5),T(3),T(2))=1+T(3)=2 → 6 = 3+3, duas moedas. Pegadinha: a estratégia GULOSA (pegar sempre a maior moeda) daria 4+1+1 = 3 moedas — pior que a PD. Por isso troco genérico é problema de PD, não guloso."},
+
+{topic:"PD", diff:"dificil",
+ q:"Na mochila SEM repetição, a recorrência é:\n<pre>K(w, j) = max { K(w, j−1),  K(w − peso_j, j−1) + valor_j }</pre>O que os dois termos do max representam, e por que o segundo índice é j−1 em AMBOS?",
+ opts:[
+  "1º termo: NÃO pegar o item j; 2º termo: PEGAR o item j. O índice j−1 nos dois casos garante que o item j não seja reutilizado — cada item entra no máximo uma vez.",
+  "1º termo: pegar o item j; 2º termo: pegar o item j duas vezes; j−1 é apenas convenção.",
+  "Os dois termos representam ordenar os itens por valor; j−1 evita ordenação instável.",
+  "O 1º termo é o caso base e o 2º é a recorrência; j−1 indica capacidade restante.",
+  "É a recorrência da mochila COM repetição, na qual itens podem repetir."],
+ ans:0,
+ exp:"Decisão binária sobre o item j: ou ele fica de fora (herda-se K(w, j−1)), ou entra (ganha-se valor_j, consome-se peso_j, e o restante é resolvido só com os itens 1..j−1). Se o segundo termo usasse K(w − peso_j, j), o item j poderia ser pego de novo — que é exatamente a versão COM repetição, K(w) = max{K(w − peso_i) + valor_i}. Se o item não couber (peso_j > w), vale K(w, j) = K(w, j−1)."},
+
+{topic:"PD", diff:"medio",
+ q:"Por que o algoritmo da mochila com tempo O(nW) é chamado de PSEUDO-POLINOMIAL?",
+ opts:[
+  "Porque seu custo depende do VALOR NUMÉRICO da capacidade W, e não apenas do tamanho da entrada em bits — W = 1.000.000 gera uma tabela enorme, embora precise de poucos bits para ser escrito.",
+  "Porque ele só funciona para W pequeno por limitação de hardware.",
+  "Porque sua análise usa aproximações estatísticas em vez de contagem exata.",
+  "Porque ele é polinomial apenas em grafos esparsos.",
+  "Porque o resultado retornado é aproximado, não exato."],
+ ans:0,
+ exp:"O tamanho 'honesto' da entrada é o número de bits: escrever W usa apenas log₂(W) bits. O(nW) é exponencial em log(W) — dobrar os bits de W multiplica o custo. Por isso 'pseudo': parece polinomial (nW), mas não é polinomial no tamanho da representação. O resultado continua exato; a questão é só o custo."},
+
+{topic:"PD", diff:"medio",
+ q:"Na DISTÂNCIA DE EDIÇÃO entre duas strings, de quais células a célula E(i, j) depende, e o que cada transição significa?",
+ opts:[
+  "De E(i−1, j) — remoção; E(i, j−1) — inserção; e E(i−1, j−1) + diff — substituição (custo 1) ou manutenção (custo 0, se os caracteres forem iguais).",
+  "Apenas de E(i−1, j−1), pois só substituições são permitidas.",
+  "De todas as células da tabela, pois qualquer par de prefixos interage.",
+  "De E(i+1, j) e E(i, j+1), pois a tabela é preenchida de trás para frente obrigatoriamente.",
+  "Apenas de E(0, 0), o caso base universal."],
+ ans:0,
+ exp:"E(i, j) = distância entre os i primeiros caracteres de uma string e os j primeiros da outra; casos base E(i,0) = i e E(0,j) = j. A célula olha 3 vizinhas: de cima (remover caractere), da esquerda (inserir) e da diagonal (substituir se diferentes, manter se iguais). Ex.: CASA → CAMA exige 1 operação (substituir S por M), então E(4,4) = 1. Tabela m×n ⇒ tempo O(mn)."},
+
+{topic:"PD", diff:"dificil",
+ q:"O que significa dizer que todo algoritmo de programação dinâmica pode ser visto como um DAG IMPLÍCITO?",
+ opts:[
+  "Cada nó é um SUBPROBLEMA e cada aresta é uma DEPENDÊNCIA ('para resolver B, preciso de A'); como não pode haver dependência circular, o grafo é acíclico, e a ordem de preenchimento da tabela é uma ordenação topológica desse DAG.",
+  "A PD só funciona quando a entrada do problema é literalmente um grafo acíclico.",
+  "O DAG representa a hierarquia de chamadas do sistema operacional durante a recursão.",
+  "Significa que toda tabela de PD deve ser armazenada como lista de adjacência.",
+  "É uma metáfora sem consequência prática para a ordem de cálculo."],
+ ans:0,
+ exp:"A visão unificadora: subproblemas = vértices, dependências = arestas. Ciclos são impossíveis (um subproblema não pode depender de si mesmo, direta ou indiretamente), logo é um DAG. A ordem bottom-up correta é exatamente uma ordem topológica desse DAG — por isso o caminho mínimo em DAG (dist(v) = min{dist(u) + peso(u,v)} sobre os predecessores) é o exemplo mais 'puro' de PD em grafos."},
+
+{topic:"PD", diff:"medio",
+ q:"Como se estima o TEMPO de um algoritmo de PD, e qual é o custo de uma tabela m × n em que cada célula é calculada em tempo constante?",
+ opts:[
+  "Tempo ≈ (quantidade de subproblemas) × (tempo por subproblema); a tabela m × n custa O(mn).",
+  "Tempo ≈ profundidade da recursão ao quadrado; a tabela custa O(m + n).",
+  "Tempo é sempre O(n log n) em PD; a tabela custa O(log(mn)).",
+  "Tempo ≈ número de casos base; a tabela custa O(1).",
+  "Tempo não pode ser estimado sem executar o algoritmo."],
+ ans:0,
+ exp:"Fórmula geral: nº de subproblemas × custo de cada um. Exemplos do material: Fibonacci O(n); troco O(V · nº de moedas); mochila O(nW); distância de edição O(mn); Floyd-Warshall O(V³). Memória segue o tamanho da tabela, mas às vezes dá para economizar (ex.: guardar só a linha anterior quando é a única dependência)."},
+
+{topic:"PD", diff:"medio",
+ q:"Qual é a diferença entre DIVISÃO E CONQUISTA e PROGRAMAÇÃO DINÂMICA, e qual algoritmo é o exemplo clássico da primeira?",
+ opts:[
+  "Divisão e conquista divide em subproblemas INDEPENDENTES (que em geral não se repetem); PD reaproveita respostas de subproblemas que se REPETEM. Exemplo clássico de divisão e conquista: Merge Sort.",
+  "São a mesma técnica; Merge Sort é exemplo de ambas indistintamente.",
+  "Divisão e conquista exige tabela; PD nunca usa recursão. Exemplo: Fibonacci.",
+  "PD divide o problema pela metade; divisão e conquista reduz de um em um. Exemplo: mochila.",
+  "Divisão e conquista só se aplica a grafos; PD só a strings. Exemplo: Dijkstra."],
+ ans:0,
+ exp:"Merge Sort divide o vetor em metades DISJUNTAS — as duas metades não compartilham subproblemas, então não há o que memoizar. Em PD (Fibonacci, troco, mochila, distância de edição), os subproblemas são só um pouco menores e se sobrepõem maciçamente — guardar respostas é o que derruba o custo de exponencial para polinomial (ou pseudo-polinomial)."},
+
+{topic:"PD", diff:"facil",
+ q:"Em uma prova, quais 'sinais' no enunciado sugerem modelar o problema com programação dinâmica?",
+ opts:[
+  "Expressões como 'maior valor possível', 'quantidade mínima', 'menor custo', 'melhor combinação', com escolhas encadeadas cujos melhores resultados parciais podem ser tabelados.",
+  "Expressões como 'ordene o vetor' e 'encontre o elemento na posição k'.",
+  "Pedidos de estruturas de dados, como 'implemente uma pilha'.",
+  "Qualquer menção a grafos, mesmo sem otimização envolvida.",
+  "Enunciados que pedem apenas verificar se uma aresta existe."],
+ ans:0,
+ exp:"O padrão de PD: otimizar (max/min) sobre uma sequência de decisões, em que a resposta ótima de estados maiores se monta a partir de estados menores repetidos — mochila, troco, subsequências, caminhos mínimos em DAG, distância de edição. Ordenação/busca simples e consultas pontuais não têm sobreposição de subproblemas a explorar."},
+];
+
+/* ============================================================ */
+const TOPIC_LABEL = { GRAFOS:"Grafos", HEAP:"Heap & Filas de Prioridade", ENUM:"Enumeração", PD:"Prog. Dinâmica" };
+const DIFF_LABEL = { facil:"Fácil", medio:"Médio", dificil:"Difícil" };
+
+let selected = new Set(Object.keys(TOPIC_LABEL));
+let quizList = [], current = 0, score = 0, wrongList = [], perTopic = {}, reviewMode = false;
+
+const $ = id => document.getElementById(id);
+
+function shuffle(arr){
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* ---- setup ---- */
+function renderChips(){
+  const box = $("topicChips"); box.innerHTML = "";
+  for (const key of Object.keys(TOPIC_LABEL)) {
+    const n = QUESTIONS.filter(q => q.topic === key).length;
+    const chip = document.createElement("div");
+    chip.className = "topic-chip" + (selected.has(key) ? " active" : "");
+    chip.textContent = `${TOPIC_LABEL[key]} (${n})`;
+    chip.onclick = () => {
+      selected.has(key) ? selected.delete(key) : selected.add(key);
+      renderChips();
+    };
+    box.appendChild(chip);
+  }
+  const total = QUESTIONS.filter(q => selected.has(q.topic)).length;
+  $("countInfo").textContent = total > 0
+    ? `${total} questões selecionadas`
+    : "Selecione ao menos um tema.";
+  $("startBtn").disabled = total === 0;
+}
+
+function startQuiz(list, review){
+  reviewMode = !!review;
+  quizList = shuffle(list.slice());
+  current = 0; score = 0; wrongList = []; perTopic = {};
+  $("setup").classList.add("hidden");
+  $("results").classList.add("hidden");
+  $("quiz").classList.remove("hidden");
+  $("reviewTag").classList.toggle("hidden", !reviewMode);
+  showQuestion();
+}
+
+/* ---- quiz flow ---- */
+function showQuestion(){
+  const q = quizList[current];
+  $("qBadges").innerHTML =
+    `<span class="badge topic">${TOPIC_LABEL[q.topic]}</span>` +
+    `<span class="badge ${q.diff}">${DIFF_LABEL[q.diff]}</span>`;
+  $("qCounter").textContent = `Questão ${current + 1} de ${quizList.length} · Acertos: ${score}`;
+  $("progressBar").style.width = (current / quizList.length * 100) + "%";
+  $("qText").innerHTML = q.q;
+  $("qExplain").classList.add("hidden");
+  $("nextBtn").classList.add("hidden");
+
+  const letters = "ABCDE";
+  const order = shuffle(q.opts.map((_, i) => i));
+  const box = $("qOptions"); box.innerHTML = "";
+  order.forEach((origIdx, pos) => {
+    const btn = document.createElement("button");
+    btn.className = "opt";
+    btn.dataset.idx = origIdx;
+    btn.innerHTML = `<span class="letter">${letters[pos]}</span><span>${q.opts[origIdx]}</span>`;
+    btn.onclick = () => answer(q, origIdx, btn);
+    box.appendChild(btn);
+  });
+}
+
+function answer(q, chosenIdx, chosenBtn){
+  const buttons = [...$("qOptions").children];
+  buttons.forEach(b => b.disabled = true);
+
+  const correct = chosenIdx === q.ans;
+  buttons.forEach(b => {
+    if (Number(b.dataset.idx) === q.ans) b.classList.add("correct");
+    else if (b === chosenBtn) b.classList.add("wrong");
+    else b.classList.add("dim");
+  });
+
+  perTopic[q.topic] = perTopic[q.topic] || { ok: 0, total: 0 };
+  perTopic[q.topic].total++;
+  if (correct) { score++; perTopic[q.topic].ok++; }
+  else wrongList.push(q);
+
+  const ex = $("qExplain");
+  ex.className = "explain " + (correct ? "ok" : "err");
+  ex.innerHTML = `<span class="verdict">${correct ? "✔ Correto!" : "✘ Incorreto."}</span>${q.exp}`;
+  ex.classList.remove("hidden");
+
+  $("qCounter").textContent = `Questão ${current + 1} de ${quizList.length} · Acertos: ${score}`;
+  $("nextBtn").textContent = current + 1 < quizList.length ? "Próxima →" : "Ver resultado →";
+  $("nextBtn").classList.remove("hidden");
+  $("nextBtn").focus();
+}
+
+$("nextBtn").onclick = () => {
+  current++;
+  if (current < quizList.length) showQuestion();
+  else showResults();
+};
+
+/* ---- results ---- */
+function showResults(){
+  $("quiz").classList.add("hidden");
+  $("results").classList.remove("hidden");
+  const pct = Math.round(score / quizList.length * 100);
+  $("scoreBig").textContent = `${score} / ${quizList.length}`;
+  $("scoreBig").style.color = pct >= 80 ? "var(--green)" : pct >= 60 ? "var(--amber)" : "var(--red)";
+  $("scoreSub").textContent = pct >= 80
+    ? `${pct}% — Excelente! Você está pronto para a prova. 🎓`
+    : pct >= 60
+      ? `${pct}% — Bom desempenho. Revise os erros abaixo antes da prova.`
+      : `${pct}% — Vale revisar o material e refazer as questões erradas.`;
+
+  let html = "<tr><th>Tema</th><th>Acertos</th><th>Aproveitamento</th></tr>";
+  for (const [t, s] of Object.entries(perTopic)) {
+    const p = Math.round(s.ok / s.total * 100);
+    html += `<tr><td>${TOPIC_LABEL[t]}</td><td>${s.ok} / ${s.total}</td><td>${p}%</td></tr>`;
+  }
+  $("breakdown").innerHTML = html;
+  $("reviewBtn").classList.toggle("hidden", wrongList.length === 0);
+}
+
+$("startBtn").onclick = () => startQuiz(QUESTIONS.filter(q => selected.has(q.topic)), false);
+$("restartBtn").onclick = () => {
+  $("results").classList.add("hidden");
+  $("setup").classList.remove("hidden");
+  renderChips();
+};
+$("reviewBtn").onclick = () => startQuiz(wrongList, true);
+
+renderChips();
+</script>
+</body>
+</html>
